@@ -1,5 +1,4 @@
 #include "tcpclient.h"
-#include <QtGui>
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QPushButton>
@@ -11,7 +10,8 @@ TCPClient::TCPClient (const QString &strHost, const quint16 nPort, const quint16
     , m_quantityBytes (quantityBytes)
     , m_nNextBlockSize (0)
 {
-    m_pTcpSocket = new QTcpSocket ();
+    m_pTcpSocket = new QTcpSocket(this);
+    m_pTcpSocket->connectToHost(m_strHost, m_nPort);
 
     // создаем объекты для вывода и ввода информации
     m_ptxtInfo = new QTextEdit(this);
@@ -19,16 +19,14 @@ TCPClient::TCPClient (const QString &strHost, const quint16 nPort, const quint16
     m_ptxtInput = new QLineEdit(this);
 
     // соединяем сигналы от сокета и слоты
-    //connect(m_pTcpSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)),
-            //this, SLOT(slotSocketStateChanged(QAbstractSocket::SocketState)));
-    // Подключаемся к сигналам connected() и error()
-    connect(m_pTcpSocket, SIGNAL(connected()), this, SLOT(slotConnected()));
+    connect(m_pTcpSocket, SIGNAL(connected()), this, SLOT(slotConnectedClient()));
     connect(m_pTcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(slotError(QAbstractSocket::SocketError)));
     connect(m_pTcpSocket, SIGNAL(readyRead()), this, SLOT(slotReadyRead()));
     connect(m_ptxtInput, SIGNAL(returnPressed()), this, SLOT(slotSendtoServer()));
 
-    // Пытаемся установить соединение
-    m_pTcpSocket->connectToHost(m_strHost, m_nPort);
+    // Устанавливаем заголовок  и размеры окна
+    setWindowTitle("TCP Client: host: " + m_strHost + ", port: " + QString::number(m_nPort));
+    resize(600, 800);
 
     QPushButton *pbtnConnect = new QPushButton ("Connect", this);
     pbtnConnect->setStyleSheet("background-color: blue;");
@@ -39,7 +37,7 @@ TCPClient::TCPClient (const QString &strHost, const quint16 nPort, const quint16
     connect (pbtnDisconnect, SIGNAL(clicked()), this, SLOT(slotPBDisconnected()));
 
     QVBoxLayout *pvbxLayout = new QVBoxLayout(this);
-    pvbxLayout->addWidget(new QLabel("<H1>Client</H1>"));
+    //pvbxLayout->addWidget(new QLabel("<H1>Client</H1>"));
     pvbxLayout->addWidget(m_ptxtInfo);
     pvbxLayout->addWidget(m_ptxtInput);
     pvbxLayout->addWidget(pbtnConnect);
@@ -55,33 +53,14 @@ TCPClient::~TCPClient() {
     }
 }
 
-void TCPClient::slotConnected(){
+void TCPClient::slotConnectedClient() {
     if (m_pTcpSocket->state() == QAbstractSocket::ConnectedState) {
+        QString information = "host: " + m_strHost + " , port: " + QString::number(m_nPort);
         m_ptxtInfo->append((QTime::currentTime()).toString() + " Socket connected");
-    } else if (m_pTcpSocket->state() == QAbstractSocket::UnconnectedState) {
-        // Обработка ошибки, если соединение не установлено
-        QString errorMessage = "Connection error: " + m_pTcpSocket->errorString();
-        m_ptxtInfo->append(errorMessage);
-        emit errorConnectClient(errorMessage);
-    } else if (m_pTcpSocket->state() == QAbstractSocket::ConnectingState) {
-        m_ptxtInfo->append("Connecting to host...");
-        // Устанавливаем таймер для повторной проверки через 1 секунду
-        QTimer::singleShot(1000, this, SLOT(checkConnection()));
-    }
-}
-
-void TCPClient::checkConnection() {
-    // Проверяем состояние сокета
-    if (m_pTcpSocket->state() == QAbstractSocket::ConnectedState) {
-        m_ptxtInfo->append((QTime::currentTime()).toString() + " Socket connected");
-    } else if (m_pTcpSocket->state() == QAbstractSocket::UnconnectedState) {
-        // Обработка ошибки, если соединение не установлено
-        QString errorMessage = "Connection error: " + m_pTcpSocket->errorString();
-        m_ptxtInfo->append(errorMessage);
-        emit errorConnectClient(errorMessage);
-    } else if (m_pTcpSocket->state() == QAbstractSocket::ConnectingState) {
-        // Повторно проверяем соединение через 1 секунду
-        QTimer::singleShot(1000, this, SLOT(checkConnection()));
+        emit connectClient(information);
+    } else {
+        QString strError = "Connection error: " + m_pTcpSocket->errorString();
+        emit errorConnectClient(strError);;
     }
 }
 
@@ -117,7 +96,6 @@ void TCPClient::slotError(QAbstractSocket::SocketError err) {
             : err == QAbstractSocket::ConnectionRefusedError ? "Connection was refused."
             : QString(m_pTcpSocket->errorString())
             );
-    m_ptxtInfo->append (strError);
     emit errorConnectClient(strError);
 }
 
@@ -136,13 +114,7 @@ void TCPClient::slotSendtoServer()
 }
 
 void TCPClient::slotPBConnected(){
-    if (m_pTcpSocket->state() == QAbstractSocket::ConnectedState) {
-        m_ptxtInfo->append((QTime::currentTime()).toString() + " Remote host is already opened");
-    } else {
-        m_pTcpSocket->connectToHost(m_strHost, m_nPort);
-        QString information = "host: " + m_strHost + " , port: " + QString::number(m_nPort);
-        emit connectClient(information);
-    }
+    m_pTcpSocket->connectToHost(m_strHost, m_nPort);
 }
 
 void TCPClient::slotPBDisconnected(){

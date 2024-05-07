@@ -24,14 +24,12 @@ public:
     explicit TCPClient(const QString &strHost, const quint16 nPort, const quint16 quantityBytes, QWidget *parent = 0);
     virtual ~TCPClient();
 public slots:
-    //void slotSocketStateChanged(QAbstractSocket::SocketState state);
-    void slotConnected();
+    void slotConnectedClient();
     void slotReadyRead();
     void slotError(QAbstractSocket::SocketError err);
     void slotSendtoServer();
     void slotPBConnected();
     void slotPBDisconnected();
-    void checkConnection();
 signals:    
     void connectClient(const QString information);
     void disconnectClient(const QString information);

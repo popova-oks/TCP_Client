@@ -38,7 +38,10 @@ Application::Application(QWidget *parent)
     gBoxlayout->addWidget(lbl_3, 2, 0);
     gBoxlayout->addWidget(m_plnInputQuantityBytes, 2, 1);
 
-    // Создание нового клиента по кнопке
+    setWindowTitle("TCP Application");
+    resize(400, 600);
+
+    // Создание кнопки нового клиента
     QPushButton *pbtnNewClient = new QPushButton ("Create Client", this);
     pbtnNewClient->setStyleSheet("background-color: blue;");
     connect (pbtnNewClient, SIGNAL(clicked()), this, SLOT(slotCreateNewClient()));
@@ -83,15 +86,15 @@ void Application::slotCreateNewClient() {
 }
 
 void Application::slotConnectClient(const QString information) {
-    m_ptxtInfo->append((QTime::currentTime()).toString() + " The client connected - " + information);
+    m_ptxtInfo->append((QTime::currentTime()).toString() + " The client connected. " + information);
 }
 
 void Application::slotDisconnectClient(const QString information) {
-    m_ptxtInfo->append((QTime::currentTime()).toString() + " The client disconnected - " + information);
+    m_ptxtInfo->append((QTime::currentTime()).toString() + " The client disconnected. " + information);
 }
 
 void Application::slotErrorConnectClient(const QString error) {
-    m_ptxtInfo->append((QTime::currentTime()).toString() + " This client couldn't connected: " + error);
+    m_ptxtInfo->append((QTime::currentTime()).toString() + " This client couldn't connected. " + error);
 }
 
 void Application::slotDeleteClient() {
