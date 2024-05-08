@@ -11,7 +11,11 @@ TCPClient::TCPClient (const QString &strHost, const quint16 nPort, const quint16
     , m_nNextBlockSize (0)
 {
     m_pTcpSocket = new QTcpSocket(this);
+
     m_pTcpSocket->connectToHost(m_strHost, m_nPort);
+    // Получение состояния сокета
+    QAbstractSocket::SocketState state = m_pTcpSocket->state();
+    qDebug() << "Socket Constructor state 1: " << state;
 
     // создаем объекты для вывода и ввода информации
     m_ptxtInfo = new QTextEdit(this);
@@ -46,21 +50,33 @@ TCPClient::TCPClient (const QString &strHost, const quint16 nPort, const quint16
 }
 
 TCPClient::~TCPClient() {
+    // Получение состояния сокета
+    QAbstractSocket::SocketState state7 = m_pTcpSocket->state();
+    qDebug() << "Socket Destructor state 7 " << state7;
+
     if (m_pTcpSocket->state() == QAbstractSocket::ConnectedState) {
         m_pTcpSocket->disconnectFromHost();
         QString information = "host: " + m_strHost + " , port: " + QString::number(m_nPort);
         emit disconnectClient(information);
+
+        // Получение состояния сокета
+        QAbstractSocket::SocketState state8 = m_pTcpSocket->state();
+        qDebug() << "Socket Destructor state 8 " << state8;
     }
 }
 
 void TCPClient::slotConnectedClient() {
+    // Получение состояния сокета
+    QAbstractSocket::SocketState state3 = m_pTcpSocket->state();
+    qDebug() << "Socket Connected Client state 3: " << state3;
+
     if (m_pTcpSocket->state() == QAbstractSocket::ConnectedState) {
         QString information = "host: " + m_strHost + " , port: " + QString::number(m_nPort);
         m_ptxtInfo->append((QTime::currentTime()).toString() + " Socket connected");
         emit connectClient(information);
     } else {
         QString strError = "Connection error: " + m_pTcpSocket->errorString();
-        emit errorConnectClient(strError);;
+        emit errorConnectClient(strError);
     }
 }
 
@@ -76,7 +92,6 @@ void TCPClient::slotReadyRead()
             }
             in >> m_nNextBlockSize;
         }
-
         if (m_pTcpSocket->bytesAvailable() < m_nNextBlockSize) {
             break;
         }
@@ -90,6 +105,10 @@ void TCPClient::slotReadyRead()
 }
 
 void TCPClient::slotError(QAbstractSocket::SocketError err) {
+    // Получение состояния сокета
+    QAbstractSocket::SocketState state4 = m_pTcpSocket->state();
+    qDebug() << "Socket state 4 Error" << state4;
+
     QString strError = "Error = " +
             ( err == QAbstractSocket::HostNotFoundError ? "The host not found."
             : err == QAbstractSocket::RemoteHostClosedError ? "Remote host is closed."
@@ -99,8 +118,7 @@ void TCPClient::slotError(QAbstractSocket::SocketError err) {
     emit errorConnectClient(strError);
 }
 
-void TCPClient::slotSendtoServer()
-{
+void TCPClient::slotSendtoServer() {
     QByteArray  arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_3);
@@ -115,11 +133,24 @@ void TCPClient::slotSendtoServer()
 
 void TCPClient::slotPBConnected(){
     m_pTcpSocket->connectToHost(m_strHost, m_nPort);
+
+    // Получение состояния сокета
+    QAbstractSocket::SocketState state2 = m_pTcpSocket->state();
+    qDebug() << "Socket PB Connected state2: " << state2;
 }
 
 void TCPClient::slotPBDisconnected(){
+    // Получение состояния сокета
+    QAbstractSocket::SocketState state5 = m_pTcpSocket->state();
+    qDebug() << "Socket PB Disconnect state 5 " << state5;
+
     if (m_pTcpSocket->state() == QAbstractSocket::ConnectedState) {
         m_pTcpSocket->disconnectFromHost();
+
+        // Получение состояния сокета
+        QAbstractSocket::SocketState state6 = m_pTcpSocket->state();
+        qDebug() << "Socket PB Disconnect state 6 " << state6;
+
         QString information = "host: " + m_strHost + " , port: " + QString::number(m_nPort);
         emit disconnectClient(information);
         m_ptxtInfo->append((QTime::currentTime()).toString() + " Socket disconnected");
